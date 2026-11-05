@@ -90,7 +90,7 @@ function renderUsers(users, emptyMsg) {
     return;
   }
   userBox.innerHTML = users.map(u =>
-    `<span class="badge bg-secondary badge-user" title="시리얼번호: ${esc(u.serial)}">${esc(u.name)}</span>`
+    `<span class="badge bg-secondary badge-user" title="${esc(u.model || '')}">${esc(u.name)}</span>`
   ).join('');
 }
 
