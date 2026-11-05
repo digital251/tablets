@@ -1,0 +1,31 @@
+/* 전체 브라우저 스크롤을 막고 디바이스 화면에 맞춤 */
+html, body {
+  height: 100%; margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; font-family: 'Malgun Gothic', sans-serif;
+}
+.app-container { display: flex; flex-direction: column; height: 100vh; padding: 20px 24px; }
+.main-dashboard { flex: 1; min-height: 0; }
+#codeForm { max-width: 480px; margin-top: 10vh; }
+.right-col { gap: 1rem; }
+.full-height-card { display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
+.full-height-card.half { height: 50%; }
+.card-body-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+.card-header { color: white; font-weight: bold; flex-shrink: 0; }
+.loading { display: flex; justify-content: center; align-items: center; height: 100%; }
+
+/* 요소 클릭 디자인 및 선택 효과 */
+.clickable-row { cursor: pointer; transition: background 0.2s; }
+.clickable-row:hover { background-color: #f1f3f5 !important; }
+.active-org { background-color: #e8f5e9 !important; font-weight: bold; border-left: 5px solid #2e7d32; }
+.active-model { background-color: #e3f2fd !important; font-weight: bold; border-left: 5px solid #1565c0; }
+
+/* 사용자 이름 표시 */
+.badge-user { font-size: 0.95rem; margin: 4px; padding: 8px 14px; display: inline-block; border: 1px solid #6c757d; }
+
+/* 휴대폰처럼 좁은 화면에서는 위아래로 쌓고 화면 전체를 스크롤 */
+@media (max-width: 767.98px) {
+  html, body { overflow: auto; height: auto; }
+  .app-container { height: auto; padding: 16px; }
+  .main-dashboard > div { height: auto !important; }
+  .full-height-card, .full-height-card.half { height: auto !important; }
+  .card-body-scroll { max-height: 50vh; }
+}

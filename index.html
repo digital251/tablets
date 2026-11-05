@@ -3,56 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>영신중학교 태블릿</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    /* 전체 브라우저 스크롤을 막고 디바이스 화면에 맞춤 */
-    html, body {
-      height: 100%; margin: 0; padding: 0; background-color: #f8f9fa; overflow: hidden; font-family: 'Malgun Gothic', sans-serif;
-    }
-    .app-container { display: flex; flex-direction: column; height: 100vh; padding: 20px 24px; }
-    .main-dashboard { flex: 1; min-height: 0; }
-    .full-height-card { display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
-    .card-body-scroll { flex: 1; overflow-y: auto; min-height: 0; }
-    .card-header { color: white; font-weight: bold; flex-shrink: 0; }
-    .loading { display: flex; justify-content: center; align-items: center; height: 100%; }
-
-    /* 요소 클릭 디자인 및 선택 효과 */
-    .clickable-row { cursor: pointer; transition: background 0.2s; }
-    .clickable-row:hover { background-color: #f1f3f5 !important; }
-    .active-org { background-color: #e8f5e9 !important; font-weight: bold; border-left: 5px solid #2e7d32; }
-    .active-model { background-color: #e3f2fd !important; font-weight: bold; border-left: 5px solid #1565c0; }
-
-    /* 사용자 이름 표시 */
-    .badge-user { font-size: 0.95rem; margin: 4px; padding: 8px 14px; display: inline-block; border: 1px solid #6c757d; }
-
-    /* 휴대폰처럼 좁은 화면에서는 위아래로 쌓고 화면 전체를 스크롤 */
-    @media (max-width: 767.98px) {
-      html, body { overflow: auto; height: auto; }
-      .app-container { height: auto; padding: 16px; }
-      .main-dashboard > div { height: auto !important; }
-      .full-height-card { height: auto !important; }
-      .card-body-scroll { max-height: 50vh; }
-    }
-  </style>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <!-- 이 페이지가 불러올 수 있는 곳을 제한 (스크립트는 같은 사이트, 데이터는 Apps Script만) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>태블릿 현황</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+  <link href="style.css" rel="stylesheet">
 </head>
 <body>
 
   <div class="app-container">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0 flex-wrap gap-2">
-      <h2 class="text-secondary fw-bold m-0">📱 영신중학교 태블릿 현황</h2>
       <div>
-        <button class="btn btn-outline-secondary me-2" onclick="resetFilter()">📊 전체보기</button>
-        <button class="btn btn-primary" onclick="loadData()">🔄 데이터 새로고침</button>
+        <h2 class="text-secondary fw-bold m-0">📱 태블릿 현황</h2>
+        <div id="fileInfo" class="small text-muted"></div>
+      </div>
+      <div id="toolbar" class="d-none">
+        <button class="btn btn-outline-secondary me-2" id="resetBtn" type="button">📊 전체보기</button>
+        <button class="btn btn-primary me-2" id="reloadBtn" type="button">🔄 데이터 새로고침</button>
+        <button class="btn btn-outline-dark d-none" id="lockBtn" type="button">🔒 잠그기</button>
       </div>
     </div>
 
-    <div id="loading" class="loading">
+    <form id="codeForm" class="card shadow-sm border-0 p-4 mx-auto w-100 d-none">
+      <label for="codeInput" class="form-label fw-bold">접속 코드를 입력하세요.</label>
+      <input type="password" class="form-control mb-2" id="codeInput" autocomplete="current-password" maxlength="100">
+      <div class="form-text mb-3">한 번 들어오면 이 브라우저에서는 다시 묻지 않습니다. 공용 컴퓨터에서는 다 본 뒤 🔒 잠그기를 눌러 주세요.</div>
+      <div id="codeError" class="text-danger small mb-2 d-none"></div>
+      <button type="submit" class="btn btn-primary">들어가기</button>
+    </form>
+
+    <div id="loading" class="loading d-none">
       <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
       <span class="ms-3 text-secondary">데이터를 실시간 집계 중입니다...</span>
     </div>
 
-    <div id="error" class="alert alert-danger d-none"></div>
+    <div id="error" class="alert alert-danger d-none">
+      <div id="errorText" class="mb-2"></div>
+      <button class="btn btn-sm btn-outline-danger" id="retryBtn" type="button">다시 시도</button>
+    </div>
 
     <div id="dashboard" class="row g-3 main-dashboard d-none">
 
@@ -70,9 +61,9 @@
         </div>
       </div>
 
-      <div class="col-lg-7 col-md-6 h-100 d-flex flex-column" style="gap: 1rem;">
+      <div class="col-lg-7 col-md-6 h-100 d-flex flex-column right-col">
 
-        <div class="card full-height-card" style="height: 50%;">
+        <div class="card full-height-card half">
           <div class="card-header bg-primary" id="model-card-header">📱 2단계: 모델 선택 (전체)</div>
           <div class="card-body card-body-scroll p-0">
             <table class="table table-hover align-middle mb-0">
@@ -84,7 +75,7 @@
           </div>
         </div>
 
-        <div class="card full-height-card" style="height: 50%;">
+        <div class="card full-height-card half">
           <div class="card-header bg-dark text-warning" id="user-card-header">👤 사용자 명단</div>
           <div class="card-body card-body-scroll bg-white p-3">
             <div id="user-list" class="d-flex flex-wrap align-content-start"></div>
@@ -95,171 +86,6 @@
     </div>
   </div>
 
-  <script>
-    /* Apps Script 배포 후 받은 웹 앱 주소(…/exec) */
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyeV8cIGQvnVu7-2Zq2IasTLDClzGK0nwGJvjZRKyYZFtLnD6LBprbT3C1FPV9l-EjigQ/exec';
-
-    let cachedData = null;
-    let selectedOrg = "전체";
-    let selectedModel = "";
-
-    // 🔒 상시 인증 및 보호 처리가 필요한 타겟 조직 (서버가 보내 주면 그 값을 씀)
-    let secureOrgs = ["교사용태블릿", "잉여태블릿"];
-
-    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-    /** 서버(Apps Script)에 요청. text/plain으로 보내 CORS 사전 확인을 피하고, 구글 로그인 정보는 보내지 않음 */
-    async function api(payload) {
-      if (!API_URL) return { error: "index.html의 API_URL에 Apps Script 웹 앱 주소를 넣어 주세요." };
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload), redirect: 'follow', credentials: 'omit'
-        });
-        const text = await res.text();
-        try { return JSON.parse(text); }
-        catch (e) { return { error: `서버가 올바른 답을 주지 않았습니다 (상태 ${res.status}). 웹 앱 배포의 액세스 권한이 '모든 사용자'인지 확인해 주세요.` }; }
-      } catch (e) {
-        return { error: "서버에 연결하지 못했습니다: " + e.message };
-      }
-    }
-
-    function showLoading(on) {
-      document.getElementById('loading').classList.toggle('d-none', !on);
-      document.getElementById('dashboard').classList.toggle('d-none', on);
-    }
-    function showError(msg) {
-      const box = document.getElementById('error');
-      box.textContent = msg;
-      box.classList.remove('d-none');
-      document.getElementById('loading').classList.add('d-none');
-    }
-
-    async function loadData() {
-      document.getElementById('error').classList.add('d-none');
-      showLoading(true);
-      const data = await api({ action: 'stats' });
-      if (data.error) return showError(data.error);
-      cachedData = data;
-      if (data.secureOrgs) secureOrgs = data.secureOrgs;
-      selectedOrg = "전체";
-      selectedModel = "";
-      renderOrgTable(data.orgSummary);
-      renderModelTable(data.totalModelSummary, "전체");
-      clearUserList();
-      showLoading(false);
-    }
-
-    function renderOrgTable(orgs) {
-      const tbody = document.getElementById('org-list');
-      tbody.innerHTML = orgs.map((item, i) => `
-        <tr class="clickable-row" data-i="${i}">
-          <td class="px-3">${secureOrgs.includes(item.name) ? '🔒 ' : ''}${esc(item.name)}</td>
-          <td class="text-end fw-bold text-success px-3">${item.count}대</td>
-        </tr>
-      `).join('');
-      tbody.querySelectorAll('tr').forEach(tr => {
-        tr.onclick = function() { handleOrgRouting(orgs[Number(tr.dataset.i)].name, tr); };
-      });
-    }
-
-    // 🔒 조직을 클릭했을 때 일반/보안 구역 여부를 라우팅 제어
-    async function handleOrgRouting(orgName, rowElement) {
-      if (!secureOrgs.includes(orgName)) return filterByOrg(orgName, rowElement);
-
-      // 이미 해당 보안 조직의 데이터를 받아 왔으면 바로 표시
-      if (cachedData.orgUserMap && cachedData.orgUserMap[orgName]) return filterByOrg(orgName, rowElement);
-
-      const inputPwd = prompt(`'${orgName}' 구역에 접근하기 위해 교사인증 비밀번호를 입력해주세요:`);
-      if (!inputPwd) return;
-
-      showLoading(true);
-      const res = await api({ action: 'verify', org: orgName, password: inputPwd });
-      showLoading(false);
-      if (res.error) return alert(res.error);
-      if (!res.success) return alert(res.message);
-
-      // 검증 성공 시에만 받은 세부 정보를 캐시에 합침
-      cachedData.modelMap[orgName] = res.modelMap;
-      cachedData.orgUserMap[orgName] = res.orgUserMap;
-      Object.assign(cachedData.orgModelUserMap, res.orgModelUserMap);
-      filterByOrg(orgName, rowElement);
-    }
-
-    function renderUsers(users, emptyMsg) {
-      const userBox = document.getElementById('user-list');
-      if (users.length === 0) {
-        userBox.innerHTML = `<span class="text-muted">${esc(emptyMsg)}</span>`;
-        return;
-      }
-      userBox.innerHTML = users.map(u =>
-        `<span class="badge bg-secondary badge-user" title="시리얼번호: ${esc(u.serial)}">${esc(u.name)}</span>`
-      ).join('');
-    }
-
-    // 🏢 1단계: 조직 클릭
-    function filterByOrg(orgName, rowElement) {
-      document.querySelectorAll('#org-list .clickable-row').forEach(el => el.classList.remove('active-org'));
-      rowElement.classList.add('active-org');
-      selectedOrg = orgName;
-      selectedModel = "";
-
-      // 2단계 모델 테이블 업데이트
-      const modelsObj = cachedData.modelMap[orgName] || {};
-      const filteredModels = Object.keys(modelsObj).map(key => ({ name: key, count: modelsObj[key] })).sort((a, b) => b.count - a.count);
-      renderModelTable(filteredModels, orgName);
-
-      // 조직 선택 시 해당 조직의 전체 사용자를 먼저 출력
-      document.getElementById('user-card-header').innerText = `👤 사용자 명단 [${selectedOrg} 전체]`;
-      renderUsers(cachedData.orgUserMap[orgName] || [], '해당 조직에 등록된 명단이 존재하지 않습니다.');
-    }
-
-    function renderModelTable(models, orgTitle) {
-      document.getElementById('model-card-header').innerText = `📱 2단계: 모델 선택 (${orgTitle})`;
-      const tbody = document.getElementById('model-list');
-      tbody.innerHTML = models.map((item, i) => `
-        <tr class="clickable-row" data-i="${i}">
-          <td class="px-3">${esc(item.name)}</td>
-          <td class="text-end fw-bold text-primary px-3">${item.count}대</td>
-        </tr>
-      `).join('');
-      tbody.querySelectorAll('tr').forEach(tr => {
-        tr.onclick = function() { filterByUsers(models[Number(tr.dataset.i)].name, tr); };
-      });
-    }
-
-    // 📱 2단계: 모델 클릭
-    function filterByUsers(modelName, rowElement) {
-      if (selectedOrg === "전체") {
-        alert("1단계에서 먼저 조직을 선택해 주세요.");
-        return;
-      }
-      document.querySelectorAll('#model-list .clickable-row').forEach(el => el.classList.remove('active-model'));
-      rowElement.classList.add('active-model');
-      selectedModel = modelName;
-
-      document.getElementById('user-card-header').innerText = `👤 사용자 명단 [${selectedOrg} > ${modelName}]`;
-      renderUsers(cachedData.orgModelUserMap[selectedOrg + "|" + modelName] || [], '해당 조건의 사용자가 없습니다.');
-    }
-
-    function clearUserList() {
-      document.getElementById('user-card-header').innerText = `👤 사용자 명단`;
-      document.getElementById('user-list').innerHTML = '<span class="text-muted">조직과 모델을 차례로 클릭하면 해당하는 사용자 명단이 나타납니다.</span>';
-    }
-
-    function resetFilter() {
-      if (!cachedData) return;
-      selectedOrg = "전체";
-      selectedModel = "";
-      document.querySelectorAll('.clickable-row').forEach(el => {
-        el.classList.remove('active-org');
-        el.classList.remove('active-model');
-      });
-      renderModelTable(cachedData.totalModelSummary, "전체");
-      clearUserList();
-    }
-
-    loadData();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
